@@ -293,3 +293,36 @@ print(confusion_matrix(Y_pred_new, Y_test))
 #Hence, this is a good model 
 
 #-------------------------------------------------------------RANDOM FOREST-------------------------------------------------------------
+from sklearn.ensemble import RandomForestClassifier
+
+#Creating a random forest classifier,fitting the model, predicting the results using the before up-sampling data to compare the results
+rf_model = RandomForestClassifier(n_estimators=1000, criterion='gini', max_depth=5, random_state = 100)
+rf_model.fit(x_train, y_train)
+rf_pred = rf_model.predict(x_test)
+
+#Classification report and accuracy
+print(classification_report(y_test, rf_pred))
+print(accuracy_score(y_test, rf_pred))
+
+#Again the same problem, very low results for the class 1 (churn), but still better as compared to the decision tree initial results
+#Let's try with the resampled data
+from imblearn.combine import SMOTEENN
+rf_sm = SMOTEENN(random_state = 42)
+rf_x_resampled, rf_y_resampled = rf_sm.fit_resample(x, y)    #Resampling the model
+
+X_train_rf, X_test_rf, Y_train_rf, Y_test_rf = train_test_split(rf_x_resampled, rf_y_resampled, test_size = 0.2, random_state=100)  #splitting again on resampled data
+
+#Fitting the model
+rf_clf_mdl = RandomForestClassifier()
+rf_clf_mdl.fit(X_train_rf, Y_train_rf)
+
+#Predicting on the test data
+Y_pred_rf = rf_clf_mdl.predict(X_test_rf)
+
+#Printing the classification report
+print(classification_report(Y_test_rf, Y_pred_rf))
+print(accuracy_score(Y_pred_rf, Y_test_rf))
+
+#Conclusion: upsampling method is working greT FOR RANDOM FOREST AS WELL. GIVING 94.9% ACCURACY.
+
+#-------------------------------------------------------------LOGISTIC REGRESSION-------------------------------------------------------------
