@@ -326,3 +326,57 @@ print(accuracy_score(Y_pred_rf, Y_test_rf))
 #Conclusion: upsampling method is working greT FOR RANDOM FOREST AS WELL. GIVING 94.9% ACCURACY.
 
 #-------------------------------------------------------------LOGISTIC REGRESSION-------------------------------------------------------------
+from sklearn.linear_model import LogisticRegression
+
+lr = LogisticRegression()
+lr.fit(x_train, y_train)
+lr_pred = lr.predict(x_test)
+print(classification_report(y_test, lr_pred))  
+print(accuracy_score(y_test, lr_pred))  #76%
+
+#Lets try on the up-sampled data
+lrs = LogisticRegression()
+lrs.fit(x_resampled,y_resampled)
+lr_res_pred = lr.predict(X_test)
+print(classification_report(lr_res_pred, Y_test)) #Great results
+print(accuracy_score(lr_res_pred, Y_test))     #92%
+
+#-------------------------------------------------------------K-Nearest Neighbors-------------------------------------------------------------
+from sklearn.neighbors import KNeighborsClassifier
+knn_model = KNeighborsClassifier().fit(x_train, y_train)
+knn_pred = knn_model.predict(x_test)
+print(classification_report(knn_pred, y_test)) #Very bad results
+print(accuracy_score(y_test, knn_pred))  #76%
+
+#Let's try with the up-sampled data
+knn_res = KNeighborsClassifier().fit(X_train, Y_train)
+knn_res_pred = knn_res.predict(X_test)
+print(classification_report(knn_res_pred, Y_test))
+print(accuracy_score(Y_test, knn_res_pred))  #94% accuracy
+
+
+#-------------------------------------------------------------CONCLUSION OF ALL MODELS-------------------------------------------------------------
+#Printing results with non-upsampled data
+print(accuracy_score(y_test, y_pred)) #Decision tree - 76.2% Accuracy
+print(accuracy_score(y_test, rf_pred)) #Random forest - 78.8% Accuracy
+print(accuracy_score(y_test, lr_pred)) #Logistic regression - 79.2% Accuracy
+print(accuracy_score(y_test, knn_pred)) #KNN - 76.6% Accuracy
+
+
+#Printing results with up-sampled data
+print(accuracy_score(Y_test, Y_pred_new)) #Decision tree - 93.8% Accuracy
+print(accuracy_score(Y_pred_rf, Y_test_rf)) #Random forest - 94.9% Accuracy
+print(accuracy_score(lr_res_pred, Y_test)) #logistic Regression - 92.6% Accuracy
+print(accuracy_score(Y_test, knn_res_pred)) #KNN - 94.9% Accuracy
+
+#Final Conclusion
+                    #### Non- upsampled data results::::
+# As per the results and the accuracies of the models, we can say on the normal data (Non Up-sampled) each of the model is not performing good in terms of class 1 which is of our interest (Chuning customers), 
+# Logistic regression is still performing better than the other models in terms of accuracy, precision, recall etc. We can't trust the accuracy here because as we know our data is not balanced.
+
+                    #### Up sampled data results::::  
+#As per the results and the accuracies of the models, we can say on the up-sampled data each of the model is performing great, but Random Forest and KNN has the highest accuracy score out of all 4. 
+# Also, we can trust the accuracy score of these models because the data is balanced now.
+
+
+#-------------------------------------------------------------END-------------------------------------------------------------
