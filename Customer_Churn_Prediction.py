@@ -104,7 +104,7 @@ for i, predictor in enumerate(new_data2):
     plt.show()
 
  # Another way: we can write code for each of the variables like this individually:   
-sns.countplot(data=new_data2, x='gender', hue='Churn')
+sns.countplot(data=new_data2, x='partner', hue='Churn')
 plt.show()
 
 sns.countplot(data=new_data2, x='StreamingTV', hue='Churn')
@@ -154,3 +154,142 @@ sns.heatmap(new_data_dummies.corr(), cmap = 'Paired')
 plt.show()
 
 #-------------------------------------------------------------BIVARIATE ANALYSIS-------------------------------------------------------------
+#Dividing the target variable into two dataframes; one for churn and one for non-churn
+churn_target1 = new_data.loc[new_data['Churn'] == 1]  #We are more concerned about the customers who are churning
+churn_target0= new_data.loc[new_data['Churn'] == 0]
+
+
+#Writing a function to generate plots
+def uniplot(df,col,title,hue =None):
+    
+    sns.set_style('whitegrid')
+    sns.set_context('talk')
+    plt.rcParams["axes.labelsize"] = 20
+    plt.rcParams['axes.titlesize'] = 22
+    plt.rcParams['axes.titlepad'] = 30
+    
+    
+    temp = pd.Series(data = hue)
+    fig, ax = plt.subplots()
+    width = len(df[col].unique()) + 7 + 4*len(temp.unique())
+    fig.set_size_inches(width , 8)
+    plt.xticks(rotation=45)
+    plt.yscale('log')
+    plt.title(title)
+    ax = sns.countplot(data = df, x= col, order=df[col].value_counts().index,hue = hue,palette='bright') 
+        
+    plt.show()
+
+#Making plots by calling the defined function for Churn customers
+churn_target1.columns
+uniplot(churn_target1,col='Partner',title='Distribution of Partner for Churned Customers',hue='gender')  
+uniplot(churn_target1,col='PaymentMethod',title='Distribution of Payment method for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='SeniorCitizen',title='Distribution of Senior Citizen for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='Dependents',title='Distribution of Dependents method for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='PhoneService',title='Distribution of Phone Service for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='MultipleLines',title='Distribution of Multiple lines for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='Contract',title='Distribution of Contract for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='TechSupport',title='Distribution of TechSupport for Churned Customers',hue='gender') 
+uniplot(churn_target1,col='tenure_group',title='Distribution of tenure_group for Churned Customers',hue='gender') 
+
+#Making plots by calling the defined function for Non-Churn customers
+churn_target0.columns
+uniplot(churn_target0,col='Partner',title='Distribution of Partner for Non-Churned Customers',hue='gender')  
+uniplot(churn_target0,col='PaymentMethod',title='Distribution of Payment method for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='SeniorCitizen',title='Distribution of Senior Citizen for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='Dependents',title='Distribution of Dependents method for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='PhoneService',title='Distribution of Phone Service for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='MultipleLines',title='Distribution of Multiple lines for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='Contract',title='Distribution of Contract for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='TechSupport',title='Distribution of TechSupport for Non-Churned Customers',hue='gender') 
+uniplot(churn_target0,col='tenure_group',title='Distribution of tenure_group for Non-Churned Customers',hue='gender') 
+
+
+#-------------------------------------------------------------PREPROCESSING-------------------------------------------------------------
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+
+#creating a new csv file from the dummies data to use it for modeling
+new_data_dummies.to_csv('model_data.csv')
+
+#Reading the scv file
+model_data = pd.read_csv('model_data.csv')
+model_data.head()
+
+#Dropping columns 
+model_data = model_data.drop(columns=['Unnamed: 0'], axis = 1)
+model_data.head()
+
+#creating x and y variables 
+x = model_data.drop('Churn', axis = 1)
+y = model_data['Churn']
+
+#Splitting the data into test and train set
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state=100)
+
+
+#-------------------------------------------------------------CLASSIFICATION MODELS------------------------------------------------------------
+
+
+#-------------------------------------------------------------DECISION TREE-------------------------------------------------------------
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn import tree
+from sklearn.metrics import accuracy_score,confusion_matrix, classification_report
+
+#Fitting the model
+tree_clf = DecisionTreeClassifier(criterion = 'gini', random_state = 100, max_depth=4)
+tree_clf.fit(x_train, y_train)
+
+#Predicting on the test data
+y_pred = tree_clf.predict(x_test)
+
+#Comparing the predictions and the actual test data
+tree_clf.score(x_test, y_test)
+
+#Printing the classification report
+print(classification_report(y_test, y_pred, labels=[0,1]))
+
+#accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(accuracy)
+
+#Confusion matrix
+print(confusion_matrix(y_pred, y_test))
+
+#Plotting the tree
+tree.plot_tree(tree_clf)
+plt.show()
+
+
+#Conclusion form this model: As the result shows, very low precision, recall, f1 score for class 1 (churn customers) and we can not trust on the accuracy as our dataset is very imbalanced 
+# as we saw in the earlier part.
+# Accuracy is 76%, extracted form confusion matrix results (correctly classfied values / Total values; (845+230)/(845+154+180+230))
+
+#Let's use up-sampling and down-sampling technique to balance out the data and re build the model using SMOTEENN
+from imblearn.combine import SMOTEENN
+sm = SMOTEENN(random_state = 42)
+x_resampled, y_resampled = sm.fit_resample(x, y)    #Resampling the model
+
+X_train, X_test, Y_train, Y_test = train_test_split(x_resampled, y_resampled, test_size = 0.2, random_state=100)  #splitting again on resampled data
+
+#Fitting the model
+new_clf_mdl = DecisionTreeClassifier()
+new_clf_mdl.fit(X_train, Y_train)
+
+#Predicting on the test data
+Y_pred_new = new_clf_mdl.predict(X_test)
+
+#Printing the classification report
+print(classification_report(Y_test, Y_pred_new, labels=[0,1]))
+
+#accuracy
+print(accuracy_score(Y_test, Y_pred_new))
+
+#Confusion matrix
+print(confusion_matrix(Y_pred_new, Y_test))
+
+#Conclusion form the upsampling model: As the result shows, great precision, recall, f1 score and now that we balanced our data, the accuracy is 93% which is awesome. 
+#Hence, this is a good model 
+
+#-------------------------------------------------------------RANDOM FOREST-------------------------------------------------------------
